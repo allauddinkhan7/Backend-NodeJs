@@ -1,4 +1,4 @@
-class name {
+class ApiResponse {
     constructor(stausCode, data, message="Success") {
         this.stausCode = stausCode
         this.data= data
