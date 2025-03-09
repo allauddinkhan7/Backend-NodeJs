@@ -19,4 +19,10 @@ app.use(express.static("public"))
 //configuring cookies
 app.use(cookieParser())
 
+
+//routes import
+import userRouter from "./routes/user.router.js"
+//routes declaration
+app.use("/api/v1/users", userRouter) //when user hits /users then userRouter will be called and url be /api/v1/users/register 
+
 export {app}
