@@ -61,7 +61,7 @@ userSchema.pre("save", async function (next) {
   //its middleware so we have to call next() to move to next middleware
   if (!this.isModified("password")) return next();
 
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 //3. validate password  bcz we saved the password in encrypted form
