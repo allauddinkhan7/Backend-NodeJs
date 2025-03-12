@@ -10,7 +10,7 @@ pre hooks are run before saving the data and post hooks are run after saving the
 //1 make schema
 const userSchema = new mongoose.Schema(
   {
-    username: {
+    userName: {
       type: String,
       required: true,
       unique: true,
@@ -18,13 +18,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true, //when we search by username, it will be faster
     },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
+    // username: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    //   lowercase: true,
+    //   trim: true,
+    // },
     fullName: {
       type: String,
       required: true,
@@ -83,7 +83,7 @@ userSchema.methods.generateAccessToken = function () {
       //payload
       _id: this._id,
       email: this.email,
-      username: this.username,
+      userName: this.userName,
       fullName: this.fullName,
     },
     process.env.ACCESS_TOKEN_SECRET, //secret key
