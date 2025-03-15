@@ -65,7 +65,6 @@ userSchema.pre("save", async function (next) {
   next();
 });
 //3. validate password  bcz we saved the password in encrypted form
-//we can't use arrow function bcz we need to use this keyword and this is not available in arrow function
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
