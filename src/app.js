@@ -16,7 +16,7 @@ app.use(express.urlencoded({extended: true, limit: "16kb"}))//extended-> when st
 //storing file and folder
 app.use(express.static("public"))
 
-//configuring cookies
+//configuring cookies to access cookie anywhere
 app.use(cookieParser())
 
 

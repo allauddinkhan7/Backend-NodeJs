@@ -18,13 +18,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true, //when we search by username, it will be faster
     },
-    // username: {
-    //   type: String,
-    //   required: true,
-    //   unique: true,
-    //   lowercase: true,
-    //   trim: true,
-    // },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     fullName: {
       type: String,
       required: true,
