@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
       type: String, //cloudinary url
       required: true,
     },
-    avatar: {
+    coverImage: {
       type: String, //cloudinary url
     },
     watchlist: [

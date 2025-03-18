@@ -21,7 +21,7 @@ export const verifyJwt = asyncHandler(async (req, _, next) => { //not using res 
       }
   
       //add that Object 
-      req.moiz = user;
+      req.user = user;
       next()
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid access token ");

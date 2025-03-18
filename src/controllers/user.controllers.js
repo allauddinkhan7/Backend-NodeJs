@@ -185,7 +185,7 @@ const logOutUser = asyncHandler(async (req, res, next) => {
   */
 
   await User.findByIdAndUpdate(
-    req.moiz._id,
+    req.user?._id,
     {
       $set: {
         refreshToken: undefined,
@@ -228,7 +228,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (incomingRefreshToken !== user?.refreshToken)
       throw new ApiError(401, "Refresh token is expired or used");
 
-    const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
     const options = {
       httpOnly: true,
       secure: true,
@@ -253,7 +254,114 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logOutUser, refreshAccessToken };
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res.status(200).json(200, req.user, "current user fetched successfully")
+})
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user?._id); //user?._id from authMiddleware
+
+  const isPasswordCorrect = await user.isPasswordCorrect(currentPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid Password");
+  }
+
+  user.password = newPassword;
+
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "password updated successfully"));
+});
+
+const updateUser = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new ApiError(400, "All fields required");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id, //find user
+    {
+      $set: {
+        fullName: fullName,
+        email: email,
+      },
+    },
+    {
+      new: true, // we will get the updated value in response
+    }
+  ).select("-password");
+  return res.status(200).json(new ApiResponse(200, {}, "User updated"));
+});
+
+
+const updateUserAvatar = asyncHandler(async(res, req)=> {
+  const avatarLocalPath = req.file?.path;
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing")
+  }
+
+  const uploadedAvatar = await uploadOnCloudinary(avatarLocalPath)
+  if (!uploadedAvatar.url) {
+    throw new ApiError(400,"Error uploading Avatar");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set:{
+        avatar: uploadedAvatar.url
+      }
+    },
+    {new: true}
+  ).select("-password")
+  
+
+  return res.status(200).json(new ApiResponse(200, user, "Avatar updated"))
+
+})
+
+
+const updateCoverImage = asyncHandler(async (res, req) => {
+  const coverImagePath = req.file?.path;
+  if (!coverImagePath) {
+    throw new ApiError(400, "cover image file is missing")
+  }
+  const coverImage = await uploadOnCloudinary(coverImagePath)
+  if (!coverImage.url) {
+    throw new ApiError(400,"Error uploading cover image");
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url
+      },
+    },
+    {new: true}
+  ).select("-password")
+
+  return res.status(200).json(new ApiResponse(200, user, "cover image updated"))
+
+})
+
+
+export {
+  registerUser,
+  loginUser,
+  logOutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  updateUser,
+  getCurrentUser,
+  updateUserAvatar,
+  updateCoverImage
+};
 
 /*
 if no asyncHandler then use this code
