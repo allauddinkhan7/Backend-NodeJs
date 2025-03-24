@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import { subscribe } from "diagnostics_channel";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -255,8 +256,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  return res.status(200).json(200, req.user, "current user fetched successfully")
-})
+  return res
+    .status(200)
+    .json(200, req.user, "current user fetched successfully");
+});
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
@@ -299,57 +302,133 @@ const updateUser = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, {}, "User updated"));
 });
 
-
-const updateUserAvatar = asyncHandler(async(res, req)=> {
+const updateUserAvatar = asyncHandler(async (res, req) => {
   const avatarLocalPath = req.file?.path;
   if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar file is missing")
+    throw new ApiError(400, "Avatar file is missing");
   }
 
-  const uploadedAvatar = await uploadOnCloudinary(avatarLocalPath)
+  const uploadedAvatar = await uploadOnCloudinary(avatarLocalPath);
   if (!uploadedAvatar.url) {
-    throw new ApiError(400,"Error uploading Avatar");
+    throw new ApiError(400, "Error uploading Avatar");
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set:{
-        avatar: uploadedAvatar.url
-      }
+      $set: {
+        avatar: uploadedAvatar.url,
+      },
     },
-    {new: true}
-  ).select("-password")
-  
+    { new: true }
+  ).select("-password");
 
-  return res.status(200).json(new ApiResponse(200, user, "Avatar updated"))
-
-})
-
+  return res.status(200).json(new ApiResponse(200, user, "Avatar updated"));
+});
 
 const updateCoverImage = asyncHandler(async (res, req) => {
   const coverImagePath = req.file?.path;
   if (!coverImagePath) {
-    throw new ApiError(400, "cover image file is missing")
+    throw new ApiError(400, "cover image file is missing");
   }
-  const coverImage = await uploadOnCloudinary(coverImagePath)
+  const coverImage = await uploadOnCloudinary(coverImagePath);
   if (!coverImage.url) {
-    throw new ApiError(400,"Error uploading cover image");
+    throw new ApiError(400, "Error uploading cover image");
   }
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        coverImage: coverImage.url
+        coverImage: coverImage.url,
       },
     },
-    {new: true}
-  ).select("-password")
+    { new: true }
+  ).select("-password");
 
-  return res.status(200).json(new ApiResponse(200, user, "cover image updated"))
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "cover image updated"));
+});
+  
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  //we want channel profile so we go that url
+  const { userName } = req.params;
+  if (!userName?.trim()) {
+    throw new ApiError(400, "userName is missing");
+  }
 
-})
+  const channel = await User.aggregate([
+    //piplines
+    //filtering document
+    {
+      $match: {
+        userName: userName?.toLowerCase(),
+      },
+    },
+    //we got the User ex: Chai or code now count subscribers
+    //joining Documents => $lookUp
+    //how many subscribers
+    {
+      $lookup: {
+        from: "subscriptions", //-> subscription.model.js when MongiDB stores it lowerCase and plural form
+        localField: "_id",
+        foreignField: "channel", //choose channel and count documents we will get subscribers
+        as: "subscribers",
+      },
+    },
+    //how many channels did I subscribed 
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber", //select subcriber value i.e moiz and its present in Document1 and Documents. so moiz subscribed 2 channels 
+        as: "subscribedTo",
+      },
+    },
+    //adding fields in User Object
+    {
+      $addFields: { // it will keep old fields and will add the following one's
+        subscriberCount: {
+          $size: "$subscribers", //counting subscribers
+        },
+        channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed:{
+          $cond:{
+            //in subbscribers checking whether I'm present in it or not 
+            if: {$in: [req.user?._id, "$subscribers.subscriber"]},  
+            then: true,
+            else: false
+          }
+        }
+      },
+    },
+    //filering what to pass to FE
+    {
+      $project:{
+        fullName: 1,
+        userName: 1,
+        email:1,
+        avatar: 1,
+        coverImage:1,
+        isSubscribed:1,
+        subscriberCount:1,
+        channelsSubscribedToCount:1,
+        
 
+
+      }
+    }
+  ]);
+  console.log("aggregate returns-------------", channel)
+  if (!channel?.length) {
+    throw new ApiError(404, "channel does not exist")
+  }
+  return res.status.json(
+    new ApiResponse(200,channel, "User channel Fetched Successfully")
+  )
+});
 
 export {
   registerUser,
@@ -360,7 +439,8 @@ export {
   updateUser,
   getCurrentUser,
   updateUserAvatar,
-  updateCoverImage
+  updateCoverImage,
+  getUserChannelProfile,
 };
 
 /*
