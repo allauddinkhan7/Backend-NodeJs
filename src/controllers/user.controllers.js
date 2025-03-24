@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import { subscribe } from "diagnostics_channel";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -349,7 +350,7 @@ const updateCoverImage = asyncHandler(async (res, req) => {
     .status(200)
     .json(new ApiResponse(200, user, "cover image updated"));
 });
-  
+
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   //we want channel profile so we go that url
   const { userName } = req.params;
@@ -376,58 +377,111 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         as: "subscribers",
       },
     },
-    //how many channels did I subscribed 
+    //how many channels did I subscribed
     {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
-        foreignField: "subscriber", //select subcriber value i.e moiz and its present in Document1 and Documents. so moiz subscribed 2 channels 
+        foreignField: "subscriber", //select subcriber value i.e moiz and its present in Document1 and Documents. so moiz subscribed 2 channels
         as: "subscribedTo",
       },
     },
     //adding fields in User Object
     {
-      $addFields: { // it will keep old fields and will add the following one's
+      $addFields: {
+        // it will keep old fields and will add the following one's
         subscriberCount: {
           $size: "$subscribers", //counting subscribers
         },
         channelsSubscribedToCount: {
           $size: "$subscribedTo",
         },
-        isSubscribed:{
-          $cond:{
-            //in subbscribers checking whether I'm present in it or not 
-            if: {$in: [req.user?._id, "$subscribers.subscriber"]},  
+        isSubscribed: {
+          $cond: {
+            //in subbscribers checking whether I'm present in it or not
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
-            else: false
-          }
-        }
+            else: false,
+          },
+        },
       },
     },
     //filering what to pass to FE
     {
-      $project:{
+      $project: {
         fullName: 1,
         userName: 1,
-        email:1,
+        email: 1,
         avatar: 1,
-        coverImage:1,
-        isSubscribed:1,
-        subscriberCount:1,
-        channelsSubscribedToCount:1,
-        
-
-
-      }
-    }
+        coverImage: 1,
+        isSubscribed: 1,
+        subscriberCount: 1,
+        channelsSubscribedToCount: 1,
+      },
+    },
   ]);
-  console.log("aggregate returns-------------", channel)
+  console.log("aggregate returns-------------", channel);
   if (!channel?.length) {
-    throw new ApiError(404, "channel does not exist")
+    throw new ApiError(404, "channel does not exist");
   }
   return res.status.json(
-    new ApiResponse(200,channel, "User channel Fetched Successfully")
+    new ApiResponse(200, channel, "User channel Fetched Successfully")
+  );
+});
+
+const getUserHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    userName: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          //strucing data: lookup gives in array so take data out of that array and pass in obj to FE 
+          {
+            $addFields: {
+              owner:{
+                $first:"$owner "
+              }
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200, 
+      user[0].watchHistory,
+      "watch history fetched successully"
+    )
   )
+
+
 });
 
 export {
@@ -441,6 +495,7 @@ export {
   updateUserAvatar,
   updateCoverImage,
   getUserChannelProfile,
+  getUserHistory
 };
 
 /*
