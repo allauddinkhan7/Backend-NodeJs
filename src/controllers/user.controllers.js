@@ -38,16 +38,24 @@ const registerUser = asyncHandler(async (req, res) => {
   check for user creation is it null or created,
   return response
   */
-
+  console.log("user--------------", req.body);
   //get user details from FE
   const { fullName, email, userName, password } = req.body;
+ 
+
   //validation(no field empty),
-  if (
-    [fullName, email, userName, password].some((field) => field?.trim() === "")
-  ) {
+  // if (
+  //   [fullName, email, userName, password].some((field) => field?.trim() === "")
+  // ) {
+  //   throw new ApiError(400, "All fields are required");
+  // }
+  // Check if any fields are empty
+  if ([fullName, email, userName, password].some((field) => !field?.trim())) {
     throw new ApiError(400, "All fields are required");
   }
-
+  if (!userName || !userName.trim()) {
+    throw new ApiError(400, "userName is required and cannot be empty");
+  }
   //check if already exists,
   const existedUser = await User.findOne({
     $or: [
@@ -289,7 +297,9 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findByIdAndUpdate(
+    //id
     req.user?._id, //find user
+    //req.body
     {
       $set: {
         fullName: fullName,
@@ -301,6 +311,16 @@ const updateUser = asyncHandler(async (req, res) => {
     }
   ).select("-password");
   return res.status(200).json(new ApiResponse(200, {}, "User updated"));
+});
+const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.body;
+  const deletedUser = await User.findByIdAndDelete(id);
+  if (!deletedUser) {
+    throw new ApiError(400, "user not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "user deleted successully"));
 });
 
 const updateUserAvatar = asyncHandler(async (res, req) => {
@@ -460,12 +480,12 @@ const getUserHistory = asyncHandler(async (req, res) => {
               ],
             },
           },
-          //strucing data: lookup gives in array so take data out of that array and pass in obj to FE 
+          //strucing data: lookup gives in array so take data out of that array and pass in obj to FE
           {
             $addFields: {
-              owner:{
-                $first:"$owner "
-              }
+              owner: {
+                $first: "$owner ",
+              },
             },
           },
         ],
@@ -473,15 +493,15 @@ const getUserHistory = asyncHandler(async (req, res) => {
     },
   ]);
 
-  return res.status(200).json(
-    new ApiResponse(
-      200, 
-      user[0].watchHistory,
-      "watch history fetched successully"
-    )
-  )
-
-
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "watch history fetched successully"
+      )
+    );
 });
 
 export {
@@ -491,11 +511,12 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   updateUser,
+  deleteUser,
   getCurrentUser,
   updateUserAvatar,
   updateCoverImage,
   getUserChannelProfile,
-  getUserHistory
+  getUserHistory,
 };
 
 /*
