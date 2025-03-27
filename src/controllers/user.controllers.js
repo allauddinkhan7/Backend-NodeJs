@@ -265,10 +265,43 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+  console.log("getCurrentUser",req)
   return res
     .status(200)
-    .json(200, req.user, "current user fetched successfully");
+    .json(new ApiResponse(200, req.user, "current user fetched successfully"));
 });
+
+
+
+
+// const getCurrentUser = asyncHandler(async (req, res) => {
+//   console.log("getCurrentUser", req);
+
+//   // Check if the user is available (set by verifyJwt middleware)
+//   if (!req.user) {
+//     throw new ApiError(404, "User not found");
+//   }
+
+//   // Respond with the user's _id and a success message
+//   return res.status(200).json({
+//     status: 200,
+//     userId: req.user?._id,
+//     message: "Current user fetched successfully"
+//   });
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
