@@ -5,9 +5,11 @@ import cookieParser from "cookie-parser";
 const app = express();
 //configurations && always with "use"
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
-}))
+    origin: 'http://localhost:3000', // Next.js frontend URL
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
 
 //configuring limit for incoming JSON allowing only 16kb
 app.use(express.json({limit: "16kb"}))
