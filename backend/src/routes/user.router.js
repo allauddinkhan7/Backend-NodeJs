@@ -16,9 +16,7 @@ import {
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 const router = Router();
-
 router.route("/register").post(
-
   upload.fields([
     //avatar and cover pic
     {
@@ -28,7 +26,7 @@ router.route("/register").post(
     {
       name: "coverImage",
       maxCount: 1,
-    },
+    }, 
   ]),
   registerUser
 );
@@ -46,4 +44,4 @@ router.route("/avatar").patch(verifyJwt, upload.single("avatar"), updateUserAvat
 router.route("/cover-image").patch(verifyJwt, upload.single("coverImage"), updateCoverImage);
 router.route("/c/:username").get(verifyJwt, getUserChannelProfile);
 router.route("/history").get(verifyJwt, getUserHistory);
-export default router;
+ 

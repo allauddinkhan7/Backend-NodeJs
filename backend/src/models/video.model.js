@@ -11,6 +11,9 @@ const videoSchema = new mongoose.Schema(
       type: String, //cloudinary url
       required: true,
     },
+    gender: {
+      type: String
+    },
     title: {
       type: String,
       required: true,

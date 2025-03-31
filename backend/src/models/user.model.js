@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
 //2. encrypt the password
 userSchema.pre("save", async function (next) {
   // .pre is a middleware, it will run before saving the data and it will encrypt the password
-  //its middleware so we have to call next() to move to next middleware
+  // its middleware so we have to call next() to move to next middleware
   if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 10);
