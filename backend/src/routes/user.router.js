@@ -21,7 +21,7 @@ router.route("/register").post(
     //avatar and cover pic
     {
       name: "avatar",
-      maxCount: 1, //will accept 1 file
+      maxCount: 1, //will accept 1 file 
     },
     {
       name: "coverImage",

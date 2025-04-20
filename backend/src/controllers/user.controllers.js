@@ -53,9 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
   if ([fullName, email, userName, password].some((field) => !field?.trim())) {
     throw new ApiError(400, "All fields are required");
   }
-  if (!userName || !userName.trim()) {
-    throw new ApiError(400, "userName is required and cannot be empty");
-  }
+ 
   //check if already exists,
   const existedUser = await User.findOne({
     $or: [
@@ -104,7 +102,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const createdUser = await User.findById(isUserStored._id).select(
     //.select() is for mentioning fields you don't want to send to FE
-
     "-password -refreshToken"
   );
   if (!createdUser) {
