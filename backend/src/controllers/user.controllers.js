@@ -181,7 +181,6 @@ const loginUser = asyncHandler(async (req, res) => {
       )
     );
 
-  //now set route for this loggedInUser
 });
 
 const logOutUser = asyncHandler(async (req, res, next) => {
