@@ -4,7 +4,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
-import { subscribe } from "diagnostics_channel";
 import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -39,17 +38,9 @@ const registerUser = asyncHandler(async (req, res) => {
   return response
   */
   console.log("user--------------", req.body);
-  //get user details from FE
+  //get user details from F E
   const { fullName, email, userName, password } = req.body;
  
-
-  //validation(no field empty),
-  // if (
-  //   [fullName, email, userName, password].some((field) => field?.trim() === "")
-  // ) {
-  //   throw new ApiError(400, "All fields are required");
-  // }
-  // Check if any fields are empty
   if ([fullName, email, userName, password].some((field) => !field?.trim())) {
     throw new ApiError(400, "All fields are required");
   }

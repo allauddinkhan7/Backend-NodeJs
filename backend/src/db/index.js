@@ -10,6 +10,4 @@ const connectDB = async () => {
     process.exit(1); //if not 1 then it will not exit the process
   }
 };
-
-
 export default connectDB;
